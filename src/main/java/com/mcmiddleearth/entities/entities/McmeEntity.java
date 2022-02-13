@@ -614,4 +614,82 @@ public interface McmeEntity extends Entity, InventoryHolder {
     default @NotNull PersistentDataContainer getPersistentDataContainer() {
         return null;
     }
+
+    @Override
+    default boolean isOnGround() {
+        return false;
+    }
+
+    @Override
+    default void setVisualFire(boolean fire) {
+
+    }
+
+    @Override
+    default boolean isVisualFire() {
+        return false;
+    }
+
+    @Override
+    default int getFreezeTicks() {
+        return 0;
+    }
+
+    @Override
+    default int getMaxFreezeTicks() {
+        return 0;
+    }
+
+    @Override
+    default void setFreezeTicks(int ticks) {
+
+    }
+
+    @Override
+    default boolean isFrozen() {
+        return false;
+    }
+
+    @Override
+    default boolean isFreezeTickingLocked() {
+        return false;
+    }
+
+    @Override
+    default void lockFreezeTicks(boolean locked) {
+
+    }
+
+    @Override
+    default @NotNull SpawnCategory getSpawnCategory() {
+        return null;
+    }
+
+    @Override
+    @NotNull
+    default Component teamDisplayName() {
+        return null;
+    }
+
+    @Override
+    @NotNull
+    default Set<Player> getTrackedPlayers() {
+        return null;
+    }
+
+    @Override
+    default boolean spawnAt(@NotNull Location location, CreatureSpawnEvent.@NotNull SpawnReason reason) {
+        return false;
+    }
+
+    @Override
+    default boolean isInPowderedSnow() {
+        return false;
+    }
+
+    @Override
+    @NotNull
+    default Component name() {
+        return null;
+    }
 }

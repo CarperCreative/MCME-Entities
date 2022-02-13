@@ -11,18 +11,22 @@ import com.mcmiddleearth.entities.entities.composite.animation.AnimationJob;
 import com.mcmiddleearth.entities.entities.composite.animation.BakedAnimation;
 import com.mcmiddleearth.entities.entities.composite.animation.BakedAnimationTree;
 import com.mcmiddleearth.entities.entities.composite.animation.BakedAnimationType;
-import com.mcmiddleearth.entities.entities.composite.bones.Bone;
 import com.mcmiddleearth.entities.events.events.virtual.composite.BakedAnimationEntityAnimationChangeEvent;
 import com.mcmiddleearth.entities.events.events.virtual.composite.BakedAnimationEntityAnimationSetEvent;
 import com.mcmiddleearth.entities.events.events.virtual.composite.BakedAnimationEntityStateChangedEvent;
 import com.mcmiddleearth.entities.exception.InvalidDataException;
 import com.mcmiddleearth.entities.exception.InvalidLocationException;
-import org.bukkit.*;
-import org.bukkit.util.Vector;
 
-import java.io.*;
 import java.util.*;
-import java.util.logging.Logger;
+import org.bukkit.Material;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class BakedAnimationEntity extends CompositeEntity {
