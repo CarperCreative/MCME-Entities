@@ -37,6 +37,16 @@ public class BukkitCommandSender implements McmeCommandSender {
         sender.sendMessage(Component.text("[Entities] ", NamedTextColor.AQUA).append(Component.text(baseComponents[0].toLegacyText())));
     }
 
+    @Override
+    public void sendMessage(String message) {
+        sender.sendMessage(Component.text("[Entities] ", NamedTextColor.AQUA).append(Component.text(message)));
+    }
+
+    @Override
+    public void sendError(String message) {
+        sender.sendMessage(Component.text("[Entities] ", NamedTextColor.AQUA).append(Component.text(message, NamedTextColor.RED)));
+    }
+
     public CommandSender getCommandSender() {
         return sender;
     }
