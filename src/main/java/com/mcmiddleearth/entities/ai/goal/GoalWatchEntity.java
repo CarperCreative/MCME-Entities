@@ -68,6 +68,10 @@ public class GoalWatchEntity extends GoalVirtualEntity {
 
     private void setOrientation() {
         final Location location = this.getEntity().getLocation().clone();
+        if(this.target == null || !this.target.isOnline()) {
+            return;
+        }
+
         final Location targetLocation = this.target.getLocation().clone();
 
         final Location orientation = location.setDirection(
