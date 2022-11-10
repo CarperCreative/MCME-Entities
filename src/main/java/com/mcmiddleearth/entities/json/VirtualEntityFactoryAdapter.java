@@ -70,9 +70,8 @@ public class VirtualEntityFactoryAdapter extends TypeAdapter<VirtualEntityFactor
     ATTACK_DELAY                = "attack_delay",
     SUBTITLES                   = "subtitles",
     SOUNDS                      = "sounds",
-    SEQUENCED_SOUNDS            = "sequenced_sounds";
-
-
+    SEQUENCED_SOUNDS            = "sequenced_sounds",
+    TRIGGERED_SOUNDS            = "triggered_sounds";
 
     @Override
     public void write(JsonWriter out, VirtualEntityFactory factory) throws IOException {
@@ -275,6 +274,7 @@ public class VirtualEntityFactoryAdapter extends TypeAdapter<VirtualEntityFactor
                         in.endArray();
                         factory.withSounds(sounds);
                         break;
+                    case TRIGGERED_SOUNDS:
                     case SEQUENCED_SOUNDS:
                         List<String> sequencedSounds = new ArrayList<>();
                         in.beginArray();
