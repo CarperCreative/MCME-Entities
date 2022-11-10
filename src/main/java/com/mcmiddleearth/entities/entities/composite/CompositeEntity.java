@@ -194,7 +194,7 @@ Logger.getGlobal().info("Sending animation: "+viewer.getName());
 
     @Override
     public boolean hasLookUpdate() {
-        return currentHeadPitch != getLocation().getPitch() || currentHeadYaw != getHeadYaw();
+        return currentHeadPitch != getHeadPitch() || currentHeadYaw != getHeadYaw();
     }
 
     @Override

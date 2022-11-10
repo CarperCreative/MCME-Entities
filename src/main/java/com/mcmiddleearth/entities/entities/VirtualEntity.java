@@ -24,6 +24,9 @@ import com.mcmiddleearth.entities.exception.InvalidLocationException;
 import com.mcmiddleearth.entities.inventory.McmeInventory;
 import com.mcmiddleearth.entities.protocol.packets.AbstractPacket;
 import com.mcmiddleearth.entities.util.UuidGenerator;
+import java.util.concurrent.ThreadLocalRandom;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.attribute.Attributable;
 import org.bukkit.attribute.Attribute;
@@ -119,6 +122,13 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
 
     private org.bukkit.entity.Entity dependingEntity;
 
+    private final Map<UUID, Integer> sequencedSoundStage = new HashMap<>();
+    private final Map<UUID, Integer> subtitleStage = new HashMap<>();
+
+    private final List<String> sounds = new ArrayList<>();
+    private final List<String> sequencedSounds = new ArrayList<>();
+    private final List<String> subtitles = new ArrayList<>();
+
     public VirtualEntity(VirtualEntityFactory factory) throws InvalidLocationException, InvalidDataException {
         this.updateInterval = factory.getUpdateInterval();
         this.updateRandom = new Random().nextInt(updateInterval);
@@ -167,6 +177,18 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
             }
         }
         dependingEntity = factory.getDependingEntity();
+
+        if(factory.getSounds() != null) {
+            this.sounds.addAll(factory.getSounds());
+        }
+
+        if(factory.getSequencedSounds() != null) {
+            this.sequencedSounds.addAll(factory.getSequencedSounds());
+        }
+
+        if(factory.getSubtitles() != null) {
+            this.subtitles.addAll(factory.getSubtitles());
+        }
 //Logger.getGlobal().info("this goal: "+getGoal());
     }
 
@@ -484,6 +506,8 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
 //Logger.getGlobal().info("REmove entity!"+this.getClass().getSimpleName());
         removePacket.send(player);
         viewers.remove(player);
+        sequencedSoundStage.remove(player.getUniqueId());
+        subtitleStage.remove(player.getUniqueId());
     }
 
     public void removeAllViewers() {
@@ -635,6 +659,100 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
             AttributeInstance attribute = getAttribute(Attribute.GENERIC_ATTACK_SPEED);
             if(attribute!=null) attackCoolDown = (int) (160 / attribute.getValue());
         }
+    }
+
+    public List<String> getSounds() {
+        return this.sounds;
+    }
+
+    public List<String> getSequencedSounds() {
+        return this.sequencedSounds;
+    }
+
+    public void addSound(String sound, boolean sequence) {
+        if(sequence) {
+            this.sequencedSounds.add(sound);
+            return;
+        }
+
+        this.sounds.add(sound);
+    }
+
+    public void playSound(RealPlayer player) {
+        Bukkit.getScheduler().runTask(EntitiesPlugin.getInstance(), () -> {
+            for (final String sound : this.sounds) {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                    "stopsound " + player.getName() + " * " + sound);
+            }
+
+            final String sound = this.sounds.get(ThreadLocalRandom.current().nextInt(this.sounds.size()));
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                "playsound " + sound + " player " + player.getName() + " " +
+                this.location.getBlockX() + " " +
+                this.location.getBlockY() + " " +
+                this.location.getBlockZ()
+            );
+        });
+    }
+
+    public void playSequencedSound(RealPlayer player) {
+        Bukkit.getScheduler().runTask(EntitiesPlugin.getInstance(), () -> {
+            for (final String sound : this.sequencedSounds) {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                    "stopsound " + player.getName() + " * " + sound);
+            }
+
+            final int stage = this.sequencedSoundStage.getOrDefault(player.getUniqueId(), 1);
+
+            final String sound = this.sequencedSounds.get(stage - 1);
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                "playsound " + sound + " player " + player.getName() + " " +
+                this.location.getBlockX() + " " +
+                this.location.getBlockY() + " " +
+                this.location.getBlockZ()
+            );
+
+            if(this.sequencedSoundStage.size() == stage) {
+                this.sequencedSoundStage.remove(player.getUniqueId());
+                return;
+            }
+
+            this.sequencedSoundStage.put(player.getUniqueId(), stage + 1);
+        });
+    }
+
+    public void clearSounds() {
+        this.sounds.clear();
+        this.sequencedSounds.clear();
+    }
+
+    public List<String> getSubtitles() {
+        return this.subtitles;
+    }
+
+    public void addSubtitle(String text) {
+        this.subtitles.add(text);
+    }
+
+    public void sendSubtitle(RealPlayer realPlayer) {
+        final Player player = realPlayer.getBukkitPlayer();
+        final int stage = this.subtitleStage.getOrDefault(player.getUniqueId(), 1);
+
+        final String subtitle = this.subtitles.get(stage - 1);
+        for (final String s : subtitle.split("///")) {
+            player.sendMessage(ChatColor.translateAlternateColorCodes('&', s));
+        }
+
+        if(this.subtitles.size() == stage) {
+            this.subtitleStage.remove(player.getUniqueId());
+            return;
+        }
+
+        this.subtitleStage.put(player.getUniqueId(), stage + 1);
+    }
+
+    public void clearSubtitles() {
+        this.subtitles.clear();
     }
 
     private boolean isCloseToTarget(McmeEntity target, double distanceSquared) {

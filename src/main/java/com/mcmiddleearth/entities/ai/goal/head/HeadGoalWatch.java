@@ -8,7 +8,7 @@ import org.bukkit.Location;
 
 public class HeadGoalWatch extends HeadGoal {
 
-    private final McmeEntity target;
+    private McmeEntity target;
 
     private McmeEntity entity;
 
@@ -29,16 +29,25 @@ public class HeadGoalWatch extends HeadGoal {
     @Override
     public void doTick() {
         if(target != null && !(target instanceof Placeholder)) {
-            Location targetDir = entity.getLocation().clone()
-                    .setDirection(target.getLocation().toVector()
-                            .subtract(entity.getLocation().toVector()));
-            yaw = targetDir.getYaw();
-            pitch = targetDir.getPitch();
+            final Location location = this.entity.getLocation().clone();
+            final Location targetLocation = this.target.getLocation().clone();
+
+            final Location orientation = location.setDirection(
+                targetLocation.toVector().subtract(
+                    location.toVector()
+                )
+            );
+            this.yaw = orientation.getYaw();
+            this.pitch = orientation.getPitch();
         }
     }
 
     public McmeEntity getTarget() {
         return target;
+    }
+
+    public void setTarget(McmeEntity target) {
+        this.target = target;
     }
 
     @Override

@@ -7,10 +7,13 @@ import com.mcmiddleearth.entities.EntitiesPlugin;
 import com.mcmiddleearth.entities.Permission;
 import com.mcmiddleearth.entities.entities.McmeEntity;
 import com.mcmiddleearth.entities.entities.RealPlayer;
-import com.mojang.brigadier.context.CommandContext;
+import com.mcmiddleearth.entities.entities.VirtualEntity;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import org.bukkit.Location;
+
+import java.util.Collection;
+import java.util.HashSet;
 
 import static com.mojang.brigadier.arguments.StringArgumentType.greedyString;
 import static com.mojang.brigadier.arguments.StringArgumentType.word;
@@ -24,30 +27,41 @@ public class SelectCommand extends McmeEntitiesCommandHandler {
     @Override
     protected HelpfulLiteralBuilder createCommandTree(HelpfulLiteralBuilder commandNodeBuilder) {
         commandNodeBuilder
-                .requires(sender -> (sender instanceof RealPlayer)
-                        && ((RealPlayer) sender).getBukkitPlayer().hasPermission(Permission.USER.getNode()))
-                .then(HelpfulLiteralBuilder.literal("entity")
-                    .executes(context -> showSelection(context.getSource()))
-                    .then(HelpfulLiteralBuilder.literal("target")
-                        .executes(context -> setSelectTargetEntity(context.getSource()))
-                        .then(HelpfulLiteralBuilder.literal("@p")
-                            .executes(context -> {
-                                ((BukkitCommandSender)context.getSource()).setSelectedTargetEntity((RealPlayer)context.getSource());
-                                context.getSource().sendMessage(new ComponentBuilder("Saved you as target entity!").create());
-                                return 0;
-                            }))
-                        .then(HelpfulRequiredArgumentBuilder.argument("name",word())
-                            .executes(context -> selectTargetEntityByName(context.getSource(),context.getArgument("name",String.class)))))
-                    .then(HelpfulLiteralBuilder.literal("clear")
-                        .executes(context -> clearSelection(context.getSource()))))
-                .then(HelpfulLiteralBuilder.literal("location")
-                    .executes(context -> showSelectedLocations(context.getSource()))
-                    .then(HelpfulLiteralBuilder.literal("add")
-                        .executes(context -> addSelectedLocation(context.getSource(),null))
-                        .then(HelpfulRequiredArgumentBuilder.argument("location", greedyString())
-                            .executes(context -> addSelectedLocation(context.getSource(),context.getArgument("location",String.class)))))
-                    .then(HelpfulLiteralBuilder.literal("clear")
-                        .executes(context -> clearSelectedLocations(context.getSource()))));
+            .requires(sender -> (sender instanceof RealPlayer)
+                                && ((RealPlayer) sender).getBukkitPlayer().hasPermission(Permission.USER.getNode())
+            )
+            .then(HelpfulLiteralBuilder.literal("entity")
+                .executes(context -> this.showSelection(context.getSource()))
+                .then(HelpfulLiteralBuilder.literal("target")
+                    .executes(context -> this.setSelectTargetEntity(context.getSource()))
+                    .then(HelpfulLiteralBuilder.literal("@p")
+                        .executes(context -> {
+                            ((BukkitCommandSender) context.getSource()).setSelectedTargetEntity((RealPlayer) context.getSource());
+                            context.getSource().sendMessage(new ComponentBuilder("Saved you as target entity!").create());
+                            return 0;
+                        }))
+                    .then(HelpfulRequiredArgumentBuilder.argument("name", word())
+                        .executes(context -> this.selectTargetEntityByName(context.getSource(), context.getArgument("name", String.class))))
+                )
+                .then(HelpfulLiteralBuilder.literal("all")
+                    .executes(context -> this.selectAllEntities(context.getSource()))
+                )
+                .then(HelpfulLiteralBuilder.literal("clear")
+                    .executes(context -> this.clearSelection(context.getSource()))
+                )
+            )
+            .then(HelpfulLiteralBuilder.literal("location")
+                .executes(context -> this.showSelectedLocations(context.getSource()))
+                .then(HelpfulLiteralBuilder.literal("add")
+                    .executes(context -> this.addSelectedLocation(context.getSource(), null))
+                    .then(HelpfulRequiredArgumentBuilder.argument("location", greedyString())
+                        .executes(context -> this.addSelectedLocation(context.getSource(), context.getArgument("location", String.class)))
+                    )
+                )
+                .then(HelpfulLiteralBuilder.literal("clear")
+                    .executes(context -> this.clearSelectedLocations(context.getSource()))
+                )
+            );
         return commandNodeBuilder;
     }
 
@@ -76,6 +90,17 @@ public class SelectCommand extends McmeEntitiesCommandHandler {
         return 0;
     }
 
+    private int selectAllEntities(McmeCommandSender sender) {
+        final Collection<? extends McmeEntity> entities = EntitiesPlugin.getEntityServer().getEntities(VirtualEntity.class);
+
+        final BukkitCommandSender commandSender = ((BukkitCommandSender) sender);
+        commandSender.clearSelectedEntities();
+        commandSender.setSelectedEntities(new HashSet<>(entities));
+
+        sender.sendMessage(new ComponentBuilder("Select all entities as target").create());
+        return 0;
+    }
+
     private int setSelectTargetEntity(McmeCommandSender sender) {
         McmeEntity entity = ((BukkitCommandSender)sender).getSelectedEntities().stream().findFirst().orElse(null);
         if(entity != null) {
@@ -83,7 +108,6 @@ public class SelectCommand extends McmeEntitiesCommandHandler {
             sender.sendMessage(new ComponentBuilder("Saved as target entity:  " + entity.getName() + " "
                     + entity.getLocation().getBlockX() + " " + entity.getLocation().getBlockY() + " " + entity.getLocation().getBlockZ()).create());
         } else {
-            sender.sendMessage(new ComponentBuilder("You need to select an entity first.").create());
         }
         return 0;
     }

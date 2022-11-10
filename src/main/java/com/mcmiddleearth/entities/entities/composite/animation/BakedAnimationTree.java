@@ -1,6 +1,7 @@
 package com.mcmiddleearth.entities.entities.composite.animation;
 
 import com.google.common.base.Joiner;
+import com.mcmiddleearth.entities.ai.goal.GoalType;
 import com.mcmiddleearth.entities.api.ActionType;
 import com.mcmiddleearth.entities.api.MovementSpeed;
 import com.mcmiddleearth.entities.entities.composite.BakedAnimationEntity;
@@ -104,11 +105,26 @@ public class BakedAnimationTree {
         String[] path = new String[] {
                 entity.getMovementType().name().toLowerCase(),
                 entity.getMovementSpeedAnimation().name().toLowerCase(),
-                ActionType.IDLE.name().toLowerCase()
-                //entity.getActionType().name().toLowerCase()
+                getActionType(entity).name().toLowerCase(Locale.ROOT)
         };
         SearchResult searchResult = searchAnimation(path/*.split("\\.")*/);
         return searchResult.getBestMatch();
+    }
+
+    private ActionType getActionType(BakedAnimationEntity entity) {
+        if(entity.getGoal() == null) {
+            return ActionType.IDLE;
+        }
+
+        if(entity.getGoal().getType() == GoalType.WATCH_ENTITY_CONVERSATION) {
+            return ActionType.CONV;
+        }
+
+        if(entity.getGoal().getType() == GoalType.WATCH_ENTITY_CHEERING) {
+            return ActionType.CHEERING;
+        }
+
+        return ActionType.IDLE;
     }
 
     private BakedAnimation getAnimation() {

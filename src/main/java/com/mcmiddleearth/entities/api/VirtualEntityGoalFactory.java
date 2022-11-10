@@ -223,6 +223,21 @@ Logger.getGlobal().info("pathfinder: flying");
                     Constrain.checkSameWorld(targetEntity.getLocation(),entity.getLocation().getWorld());
                 goal = new GoalWatchEntity(entity,this);
                 break;
+            case WATCH_ENTITY_CONVERSATION:
+                Constrain.checkEntity(targetEntity);
+                if(!(targetEntity instanceof Placeholder))
+                    Constrain.checkSameWorld(targetEntity.getLocation(),entity.getLocation().getWorld());
+                goal = new GoalWatchEntityConversation(entity,this);
+                break;
+            case WATCH_ENTITY_CHEERING:
+                Constrain.checkEntity(targetEntity);
+                if(!(targetEntity instanceof Placeholder))
+                    Constrain.checkSameWorld(targetEntity.getLocation(),entity.getLocation().getWorld());
+                goal = new GoalWatchEntityCheering(entity,this);
+                break;
+            case WATCH_NEAREST:
+                goal = new GoalWatchNearestEntity(entity, this);
+                break;
             case RANGED_ATTACK_ENTITY:
                 Constrain.checkEntity(targetEntity);
                 if(!(targetEntity instanceof Placeholder))
@@ -287,6 +302,11 @@ Logger.getGlobal().info("pathfinder: flying");
                 Constrain.checkSameWorld(checkpoints,entity.getLocation().getWorld());
                 goal = new GoalLocationTargetFollowCheckpointsWingedFlight(entity,this, pathfinder);
                 break;*/
+            case FOLLOW_CHECKPOINTS_WONDERING:
+                Constrain.checkCheckpoints(checkpoints);
+                Constrain.checkSameWorld(checkpoints, entity.getLocation().getWorld());
+                goal = new GoalLocationTargetFollowCheckpointsWondering(entity, this, pathfinder);
+                break;
             case RANDOM_CHECKPOINTS:
                 Constrain.checkCheckpoints(checkpoints);
                 Constrain.checkSameWorld(checkpoints,entity.getLocation().getWorld());
@@ -296,6 +316,11 @@ Logger.getGlobal().info("pathfinder: flying");
                 Constrain.checkTargetLocation(targetLocation);
                 Constrain.checkSameWorld(targetLocation,entity.getLocation().getWorld());
                 goal = new GoalHoldPosition(entity,this);
+                break;
+            case WATCH_LOCATION:
+                Constrain.checkTargetLocation(targetLocation);
+                Constrain.checkSameWorld(targetLocation, entity.getLocation().getWorld());
+                goal = new GoalWatchLocation(entity, this);
                 break;
             case MIMIC:
                 Constrain.checkEntity(targetEntity);

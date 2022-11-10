@@ -29,66 +29,69 @@ public class SpawnCommand extends McmeEntitiesCommandHandler {
     @Override
     protected HelpfulLiteralBuilder createCommandTree(HelpfulLiteralBuilder commandNodeBuilder) {
         commandNodeBuilder
-                .requires(sender -> (sender instanceof RealPlayer)
-                        && ((RealPlayer) sender).getBukkitPlayer().hasPermission(Permission.USER.getNode()))
-                .executes(context -> spawnEntity(context.getSource(),
-                        null,
-                        null,
-                        null, null))
-                .then(HelpfulRequiredArgumentBuilder.argument("type", new EntityTypeArgument())
-                        .executes(context -> spawnEntity(context.getSource(),
+            .requires(sender -> (sender instanceof RealPlayer)
+                                && ((RealPlayer) sender).getBukkitPlayer().hasPermission(Permission.USER.getNode()))
+            .then(HelpfulRequiredArgumentBuilder.argument("type", new EntityTypeArgument())
+                .executes(context -> this.spawnEntity(context.getSource(),
+                        context.getArgument("type", String.class),
+                        null, null
+                    )
+                )
+                .then(HelpfulRequiredArgumentBuilder.argument("goal", new GoalTypeArgument())
+                    .executes(context -> this.spawnEntity(context.getSource(),
+                            context.getArgument("type", String.class),
+                            context.getArgument("goal", String.class), null
+                        )
+                    )
+                    .then(HelpfulRequiredArgumentBuilder.argument("dataFile", new AnimationFileArgument())
+                        .executes(context -> this.spawnEntity(context.getSource(),
                                 context.getArgument("type", String.class),
-                                null,
-                                null, null))
-                        .then(HelpfulRequiredArgumentBuilder.argument("goal", new GoalTypeArgument())
-                                .executes(context -> spawnEntity(context.getSource(),
-                                        context.getArgument("type", String.class),
-                                        null,
-                                        context.getArgument("goal", String.class), null))
-                                .then(HelpfulRequiredArgumentBuilder.argument("dataFile", new AnimationFileArgument())
-                                        .executes(context -> spawnEntity(context.getSource(),
-                                                                         context.getArgument("type", String.class),
-                                                                         null,
-                                                                         context.getArgument("goal", String.class),
-                                                                         context.getArgument("dataFile", String.class)))
-                                        .then(HelpfulRequiredArgumentBuilder.argument("name", word())
-                                                .executes(context -> spawnEntity(context.getSource(),
-                                                        context.getArgument("type", String.class),
-                                                        context.getArgument("name", String.class),
-                                                        context.getArgument("goal", String.class),
-                                                        context.getArgument("dataFile", String.class)))))));
+                                context.getArgument("goal", String.class),
+                                context.getArgument("dataFile", String.class)
+                            )
+                        )
+                        .then(HelpfulLiteralBuilder.literal("loop")
+                            .executes(context -> this.spawnEntity(context.getSource(),
+                                    context.getArgument("type", String.class),
+                                    null,
+                                    context.getArgument("goal", String.class),
+                                    context.getArgument("dataFile", String.class),
+                                    true
+                                )
+                            )
+                            .then(this.nameArgument(true))
+                        )
+                        .then(this.nameArgument())
+                    )
+                )
+            );
         return commandNodeBuilder;
     }
 
-    private int spawnEntity(McmeCommandSender sender, String type, String name, String goal, String dataFile) {//, int delay) {
-        /*VirtualEntityFactory factory = new VirtualEntityFactory(new McmeEntityType(type), ((RealPlayer)sender).getLocation())
-                .withName(name)
-                .withDataFile(name)
-                .withHeadPoseDelay(delay)
-                .withHeadPitchCenter(new Vector(0,0,0.3))
-                .withGoalType(GoalType.valueOf(goal.toUpperCase()))
-                .withTargetEntity((RealPlayer)sender);*/
-        VirtualEntityFactory factory = getFactory(sender, type, name, goal, dataFile)
-                                            .withShooter((McmeEntity) sender);
-//AttributeInstance attackSpeed = factory.getAttributes().get(Attribute.GENERIC_ATTACK_SPEED);
-//if(attackSpeed!=null) Logger.getGlobal().info("vspawn command: Attack speed: "+attackSpeed.getBaseValue()+" -> "+attackSpeed.getValue());
-        Location loc = factory.getLocation();
-        McmeEntity spawnLocationEntity = factory.getSpawnLocationEntity();
-        if(type.equalsIgnoreCase("arrow") && factory.getGoalFactory()!=null) {
-            if(factory.getGoalFactory().getTargetEntity()!=null) {
+    private int spawnEntity(McmeCommandSender sender, String type, String goal, String dataFile) {
+        return this.spawnEntity(sender, type, null, goal, dataFile, false);
+    }
+
+    private int spawnEntity(McmeCommandSender sender, String type, String name, String goal, String dataFile, boolean loop) {
+        final VirtualEntityFactory factory = this.getFactory(sender, type, name, goal, dataFile).withShooter((McmeEntity) sender);
+        final Location loc = factory.getLocation();
+        final McmeEntity spawnLocationEntity = factory.getSpawnLocationEntity();
+        if (type.equalsIgnoreCase("arrow") && factory.getGoalFactory() != null) {
+            if (factory.getGoalFactory().getTargetEntity() != null) {
                 Projectile.takeAim(factory, factory.getGoalFactory().getTargetEntity().getLocation());
-            } else if(factory.getGoalFactory().getTargetLocation()!=null) {
+            } else if (factory.getGoalFactory().getTargetLocation() != null) {
                 Projectile.takeAim(factory, factory.getGoalFactory().getTargetLocation());
             }
         }
+
+        if (loop && factory.getGoalFactory() != null) {
+            factory.getGoalFactory().withLoop(true);
+        }
+
         try {
-            VirtualEntity entity = (VirtualEntity) EntityAPI.spawnEntity(factory);
-            /*if(goal.equalsIgnoreCase("hold_position")) {
-                GoalVirtualEntity entityGoal = (GoalVirtualEntity) entity.getGoal();
-                entityGoal.clearHeadGoals();
-                entityGoal.addHeadGoal(new HeadGoalWatch((RealPlayer) sender, entity));
-            }*/
-            ((BukkitCommandSender)sender).setSelectedEntities(entity);
+            final VirtualEntity entity = (VirtualEntity) EntityAPI.spawnEntity(factory);
+
+            ((BukkitCommandSender) sender).setSelectedEntities(entity);
             sender.sendMessage(new ComponentBuilder("Spawning: " + type).create());
         } catch (InvalidLocationException e) {
             sender.sendMessage(new ComponentBuilder("Can't spawn because of invalid or missing location!").create());
@@ -99,4 +102,19 @@ public class SpawnCommand extends McmeEntitiesCommandHandler {
         return 0;
     }
 
+    private HelpfulRequiredArgumentBuilder<String> nameArgument() {
+        return this.nameArgument(false);
+    }
+
+    private HelpfulRequiredArgumentBuilder<String> nameArgument(boolean loop) {
+        return HelpfulRequiredArgumentBuilder.argument("name", word())
+            .executes(context -> this.spawnEntity(context.getSource(),
+                    context.getArgument("type", String.class),
+                    context.getArgument("name", String.class),
+                    context.getArgument("goal", String.class),
+                    context.getArgument("dataFile", String.class),
+                    loop
+                )
+            );
+    }
 }

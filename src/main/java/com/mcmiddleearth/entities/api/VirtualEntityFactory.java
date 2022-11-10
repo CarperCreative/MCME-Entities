@@ -100,6 +100,8 @@ public class VirtualEntityFactory {
 
     private org.bukkit.entity.Entity dependingEntity;
 
+    private List<String> sounds = null, sequencedSounds = null, subtitles = null;
+
     public VirtualEntityFactory(McmeEntityType type, Location location) {
         //uniqueId = UuidGenerator.fast_random();//getRandomV2();
         this.type = type;
@@ -124,7 +126,7 @@ public class VirtualEntityFactory {
                 "speechballoonlayout","mouth","manualanimation","headposedelay","viewdistance",
                 "maxrotationstep", "maxRotationStepFlight", "updateInterval", "jumpheight", "knockbackbase",
                 "knockbackperdamage","relative_position","saddlepoint","sitpoint","attackpoint",
-                "flightlevel","dive","attackpitch","saddle","color","style","attackdelay").map(String::toLowerCase)
+                "flightlevel","dive","attackpitch","saddle","color","style","attackdelay","sounds","sequencedSounds","subtitles").map(String::toLowerCase)
                 .sorted().collect(Collectors.toList());
     }
 
@@ -516,6 +518,33 @@ public class VirtualEntityFactory {
 
     public VirtualEntityFactory withAttackDelay(int attackDelay) {
         this.attackDelay = attackDelay;
+        return this;
+    }
+
+    public List<String> getSounds() {
+        return this.sounds;
+    }
+
+    public VirtualEntityFactory withSounds(List<String> sounds) {
+        this.sounds = sounds;
+        return this;
+    }
+
+    public List<String> getSequencedSounds() {
+        return this.sequencedSounds;
+    }
+
+    public VirtualEntityFactory withSequencedSounds(List<String> sequencedSounds) {
+        this.sequencedSounds = sequencedSounds;
+        return this;
+    }
+
+    public List<String> getSubtitles() {
+        return this.subtitles;
+    }
+
+    public VirtualEntityFactory withSubtitles(List<String> subtitles) {
+        this.subtitles = subtitles;
         return this;
     }
 
