@@ -1,5 +1,6 @@
 package com.mcmiddleearth.entities.entities.composite.animation;
 
+import com.comphenix.protocol.wrappers.Pair;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -10,6 +11,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -22,14 +24,17 @@ public class BoneData {
 
     private final ItemStack[] items;
 
+    private final Map<String, Integer> states;
+
     private static final double Y_SHIFT = 0.5;
 
-    public BoneData(EulerAngle headPose, Vector position, ItemStack[] items) {
+    public BoneData(EulerAngle headPose, Vector position, ItemStack[] items, Map<String, Integer> states) {
 //Logger.getGlobal().info("HeadPose: "+headPose.getX()+" "+headPose.getY()+" "+headPose.getZ());
         this.headPose = headPose;//RotationMatrix.rotateXEulerAngleDegree(headPose,45);
 //Logger.getGlobal().info("HeadPose: "+this.headPose.getX()+" "+this.headPose.getY()+" "+this.headPose.getZ());
         this.position = position;//RotationMatrix.fastRotateX(position,45);
         this.items = items;
+        this.states = states;
     }
 
     public EulerAngle getHeadPose() {
@@ -44,28 +49,34 @@ public class BoneData {
         return items;
     }
 
-    public static BoneData loadBoneData(Map<String,Integer> states, JsonObject data, Material itemMaterial) {
-        return new BoneData(readAngle(data.get("rot").getAsJsonArray()),
-                            readPosition(data.get("pos").getAsJsonArray()),
-                            readItems(states, data.get("cmd").getAsJsonObject(),itemMaterial));
+    public Map<String, Integer> getStates() {
+        return states;
     }
 
-    private static ItemStack[] readItems(Map<String,Integer> states, JsonObject data, Material itemMaterial) {
+    public static BoneData loadBoneData(JsonObject data, Material itemMaterial) {
+        final Pair<ItemStack[], Map<String, Integer>> itemsAndStates = readItemsAndStates(data.get("cmd").getAsJsonObject(), itemMaterial);
+
+        return new BoneData(readAngle(data.get("rot").getAsJsonArray()),
+                            readPosition(data.get("pos").getAsJsonArray()),
+                            itemsAndStates.getFirst(),
+                            itemsAndStates.getSecond());
+    }
+
+    private static Pair<ItemStack[], Map<String, Integer>> readItemsAndStates(JsonObject data, Material itemMaterial) {
         Set<Map.Entry<String, JsonElement>> entries = data.entrySet();
         ItemStack[] result = new ItemStack[entries.size()];
+        Map<String,Integer> states = new HashMap<>();
+
         entries.forEach(entry-> {
             ItemStack item = new ItemStack(itemMaterial);
             ItemMeta meta = item.getItemMeta();
-            Integer stateId = states.get(entry.getKey());
-            if(stateId == null) {
-                stateId = states.size();
-                states.put(entry.getKey(),stateId);
-            }
+            Integer stateId = states.computeIfAbsent(entry.getKey(), k -> states.size());
             meta.setCustomModelData(entry.getValue().getAsInt());
             item.setItemMeta(meta);
             result[stateId] = item;
         });
-        return result;
+
+        return new Pair<>(result, states);
     }
 
     private static EulerAngle readAngle(JsonArray data) {
