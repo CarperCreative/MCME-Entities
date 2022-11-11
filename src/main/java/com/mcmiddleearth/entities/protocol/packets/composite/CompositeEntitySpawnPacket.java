@@ -1,6 +1,7 @@
 package com.mcmiddleearth.entities.protocol.packets.composite;
 
 import com.mcmiddleearth.entities.entities.composite.CompositeEntity;
+import com.mcmiddleearth.entities.entities.composite.bones.Bone;
 import com.mcmiddleearth.entities.protocol.packets.AbstractPacket;
 import org.bukkit.entity.Player;
 
@@ -14,15 +15,22 @@ public class CompositeEntitySpawnPacket extends AbstractPacket {
 
     @Override
     public void send(Player recipient) {
-//Logger.getGlobal().info("Sending CompositeSpawn packet to : "+recipient.getName()+" "+entity.getBones().size());
-        entity.getBones().forEach(bone -> bone.getSpawnPacket().send(recipient));
-        entity.getBones().stream().filter(bone->bone.getDisplayName()!=null).forEach(bone->bone.getNamePacket().send(recipient));
-        entity.getBones().forEach(bone -> bone.getInitPacket().send(recipient));
+        for (final Bone bone : this.entity.getBones()) {
+            bone.getSpawnPacket().send(recipient);
+
+            if (bone.getDisplayName() != null) {
+                bone.getNamePacket().send(recipient);
+            }
+
+            bone.getInitPacket().send(recipient);
+        }
     }
 
     public void update() {
-        entity.getBones().forEach(bone -> bone.getSpawnPacket().update());
-        entity.getBones().forEach(bone -> bone.getInitPacket().update());
-   }
+        for (final Bone bone : this.entity.getBones()) {
+            bone.getSpawnPacket().update();
+            bone.getInitPacket().update();
+        }
+    }
 
 }

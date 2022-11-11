@@ -6,8 +6,10 @@ import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.Pair;
 import com.comphenix.protocol.wrappers.Vector3F;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
+import com.comphenix.protocol.wrappers.WrappedWatchableObject;
 import com.mcmiddleearth.entities.entities.composite.bones.Bone;
 import com.mcmiddleearth.entities.protocol.packets.AbstractPacket;
+import java.util.Optional;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -23,7 +25,10 @@ public class BoneMetaPacket extends AbstractPacket {
 
     private boolean hasPoseUpdate, hasItemUpdate;
 
+    protected final List<WrappedWatchableObject> storedPoseObjects = new ArrayList<>();
     private final List<WrappedDataWatcher> headPoseQueue = new ArrayList<>();
+
+    private WrappedWatchableObject headRotationObject = null;
 
     public BoneMetaPacket(Bone bone, int headPoseDelay) {
         this.bone = bone;
@@ -44,7 +49,6 @@ public class BoneMetaPacket extends AbstractPacket {
     public void update() {
         if(bone.isHasHeadPoseUpdate()) {
             WrappedDataWatcher watcher = new WrappedDataWatcher();
-            writeHeadPose(watcher);
             headPoseQueue.add(watcher);
         } else {
             headPoseQueue.add(null);
@@ -65,11 +69,36 @@ public class BoneMetaPacket extends AbstractPacket {
     }
 
     protected void writeHeadPose(WrappedDataWatcher watcher) {
+        this.writeHeadPose(watcher, false);
+    }
+
+    protected void writeHeadPose(WrappedDataWatcher watcher, boolean store) {
         WrappedDataWatcher.WrappedDataWatcherObject state = new WrappedDataWatcher
-                .WrappedDataWatcherObject(15, WrappedDataWatcher.Registry.getVectorSerializer());
-        watcher.setObject(state, new Vector3F((float)bone.getRotatedHeadPose().getX(),
-                                              (float)bone.getRotatedHeadPose().getY(),
-                                              (float)bone.getRotatedHeadPose().getZ()), false);
+            .WrappedDataWatcherObject(15, WrappedDataWatcher.Registry.getVectorSerializer());
+        final Vector3F vector3F = new Vector3F(
+            (float)this.bone.getRotatedHeadPose().getX(),
+            (float)this.bone.getRotatedHeadPose().getY(),
+            (float)this.bone.getRotatedHeadPose().getZ()
+        );
+
+        if(!store) {
+            watcher.setObject(state, vector3F, false);
+            return;
+        }
+
+        if(this.headRotationObject == null) {
+            final Optional<WrappedWatchableObject> watchableObjectOptional = this.storedPoseObjects.stream()
+                .filter(object -> object.getIndex() == state.getIndex())
+                .findFirst();
+
+            if(!watchableObjectOptional.isPresent()) {
+                return;
+            }
+
+            this.headRotationObject = watchableObjectOptional.get();
+        }
+
+        this.headRotationObject.setValue(vector3F);
     }
 
     protected void writeHeadItem() {

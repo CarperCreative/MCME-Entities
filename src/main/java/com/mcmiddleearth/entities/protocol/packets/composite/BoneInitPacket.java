@@ -6,30 +6,31 @@ import org.bukkit.entity.Player;
 
 public class BoneInitPacket extends BoneMetaPacket {
 
-    WrappedDataWatcher watcher = new WrappedDataWatcher();
+    private final WrappedDataWatcher watcher = new WrappedDataWatcher();
 
     public BoneInitPacket(Bone bone) {
         super(bone,0);
 
 //long start = System.currentTimeMillis();
-        writeInit(watcher);
+        writeInit();
 //Logger.getGlobal().info("Init: "+(System.currentTimeMillis()-start));
 
-        writeHeadPose(watcher);
+        writeHeadPose(watcher, false);
 //Logger.getGlobal().info("Pose: "+(System.currentTimeMillis()-start));
 
         writeHeadItem();
 //Logger.getGlobal().info("item: "+(System.currentTimeMillis()-start));
 
-        posePacket.getWatchableCollectionModifier().write(0,watcher.getWatchableObjects());
+        this.storedPoseObjects.addAll(watcher.getWatchableObjects());
+        posePacket.getWatchableCollectionModifier().write(0, this.storedPoseObjects);
 //Logger.getGlobal().info("Bone creation: "+(System.currentTimeMillis()-start));
     }
 
     @Override
     public void update() {
         if(bone.isHasHeadPoseUpdate()) {
-            writeHeadPose(watcher);
-            posePacket.getWatchableCollectionModifier().write(0,watcher.getWatchableObjects());
+            writeHeadPose(watcher, true);
+            posePacket.getWatchableCollectionModifier().write(0, this.storedPoseObjects);
         }
 
         if(bone.isHasItemUpdate()) {
@@ -37,7 +38,7 @@ public class BoneInitPacket extends BoneMetaPacket {
         }
     }
 
-    protected void writeInit(WrappedDataWatcher watcher) {
+    protected void writeInit() {
         WrappedDataWatcher.WrappedDataWatcherObject invisibility = new WrappedDataWatcher
                 .WrappedDataWatcherObject(0,WrappedDataWatcher.Registry.get(Byte.class));
         watcher.setObject(invisibility, Byte.decode("0x20"),false);

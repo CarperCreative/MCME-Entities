@@ -1,6 +1,7 @@
 package com.mcmiddleearth.entities.protocol.packets.composite;
 
 import com.mcmiddleearth.entities.entities.composite.CompositeEntity;
+import com.mcmiddleearth.entities.entities.composite.bones.Bone;
 import com.mcmiddleearth.entities.protocol.packets.AbstractPacket;
 import org.bukkit.entity.Player;
 
@@ -16,15 +17,18 @@ public class CompositeEntityTeleportPacket extends AbstractPacket {
 
     @Override
     public void send(Player recipient) {
-//Logger.getGlobal().info("Teleport composite");
-        entity.getBones().forEach(bone -> bone.getTeleportPacket().send(recipient));
-        entity.getBones().forEach(bone -> bone.getMetaPacket().send(recipient));
+        for (final Bone bone : this.entity.getBones()) {
+            bone.getTeleportPacket().send(recipient);
+            bone.getMetaPacket().send(recipient);
+        }
     }
 
     @Override
     public void update() {
-        entity.getBones().forEach(bone -> bone.getTeleportPacket().update());
-        entity.getBones().forEach(bone -> bone.getMetaPacket().update());
+        for (final Bone bone : this.entity.getBones()) {
+            bone.getTeleportPacket().update();
+            bone.getMetaPacket().update();
+        }
 
     }
 }
