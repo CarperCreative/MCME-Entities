@@ -74,6 +74,7 @@ public final class EntitiesPlugin extends JavaPlugin {
         setExecutor("vload", new LoadCommand("vload"));
         setExecutor("vsave", new SaveCommand("vsave"));
         setExecutor("vtest", new TestCommand("vtest"));
+        setExecutor("vcollisions", new CollisionsCommand("vcolissions"));
 
         Bukkit.getPluginManager().registerEvents(playerListener,this);
         Bukkit.getPluginManager().registerEvents(projectileListener,this);

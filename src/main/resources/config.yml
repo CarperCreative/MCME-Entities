@@ -1,3 +1,4 @@
+collisions-enabled: true
 SpeechBalloonLayout:
   LineLengthNarrow: 6
   LineLengthWide: 12
