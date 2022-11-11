@@ -84,7 +84,10 @@ public class VirtualEntityUseListener extends EntityListener {
                                 player.sendMessage(new ComponentBuilder("Entity selected.").create());
                             }
                         }
+                        break;
                     }
+
+                    this.triggerSound((VirtualEntity) entity, player);
                     break;
                 case INTERACT:
                     throwEvent(new VirtualPlayerInteractEvent(player, (VirtualEntity)entity, hand, isSneaking));
@@ -99,5 +102,22 @@ public class VirtualEntityUseListener extends EntityListener {
                     break;
             }
         }
+    }
+
+    private void triggerSound(VirtualEntity entity, RealPlayer player) {
+        if(!entity.getSubtitles().isEmpty()) {
+            entity.sendSubtitle(player);
+        }
+
+        if(!entity.getSounds().isEmpty()) {
+            entity.playSound(player);
+            return;
+        }
+
+        if(entity.getSequencedSounds().isEmpty()) {
+            return;
+        }
+
+        entity.playSequencedSound(player);
     }
 }

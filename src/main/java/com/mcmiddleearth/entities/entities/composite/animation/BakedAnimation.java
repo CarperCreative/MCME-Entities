@@ -42,7 +42,7 @@ public class BakedAnimation implements Cloneable {
     public BakedAnimation(BakedAnimationType type, String name, String animationName, String next, int interval) {
         this(null, new ArrayList<>(), type, name, animationName, next, interval);
     }
-
+    
     public void reset() {
         this.currentFrame = -1;
         this.ticks = -1;
@@ -102,6 +102,10 @@ public class BakedAnimation implements Cloneable {
         return this.animationName;
     }
 
+    public String getAnimationName() {
+        return animationName;
+    }
+
     public String getNext() {
         return this.next;
     }
@@ -124,7 +128,7 @@ public class BakedAnimation implements Cloneable {
         if (frame != null) {
             frame.apply(this.entity.getState());
         }
-    }
+    }    
 
     public BakedAnimation getReverse(String name, String animationName) {
         final BakedAnimation reverse = new BakedAnimation(this.type, name, animationName, this.next, this.interval);

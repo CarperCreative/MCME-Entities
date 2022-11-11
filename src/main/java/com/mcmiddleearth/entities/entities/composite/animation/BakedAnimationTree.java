@@ -86,7 +86,6 @@ public class BakedAnimationTree implements Cloneable {
             String name = Joiner.on('.').join(path);
             // FIXME: This will generate non-unique names for the reverse animations. I do not care.
             addAnimation(path, animation.getReverse(name, name));
-            //Logger.getGlobal().info("adding fallback: "+Joiner.on('.').join(path));
         }
     }
 
@@ -135,9 +134,9 @@ public class BakedAnimationTree implements Cloneable {
 
     public BakedAnimation getAnimation(BakedAnimationEntity entity) {
         String[] path = new String[] {
-            entity.getMovementType().name().toLowerCase(),
-            entity.getMovementSpeedAnimation().name().toLowerCase(),
-            getActionType(entity).name().toLowerCase(Locale.ROOT)
+                entity.getMovementType().name().toLowerCase(),
+                entity.getMovementSpeedAnimation().name().toLowerCase(),
+                getActionType(entity).name().toLowerCase(Locale.ROOT)
         };
         SearchResult searchResult = searchAnimation(path/*.split("\\.")*/);
         return searchResult.getBestMatch();
@@ -146,6 +145,14 @@ public class BakedAnimationTree implements Cloneable {
     private ActionType getActionType(BakedAnimationEntity entity) {
         if(entity.getGoal() == null) {
             return ActionType.IDLE;
+        }
+
+        if(entity.getGoal().getType() == GoalType.WATCH_ENTITY_CONVERSATION) {
+            return ActionType.CONV;
+        }
+
+        if(entity.getGoal().getType() == GoalType.WATCH_ENTITY_CHEERING) {
+            return ActionType.CHEERING;
         }
 
         return ActionType.IDLE;

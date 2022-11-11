@@ -67,7 +67,11 @@ public class VirtualEntityFactoryAdapter extends TypeAdapter<VirtualEntityFactor
     SADDLE_POINT                = "saddle_point",
     ATTACK_POINT                = "attack_point",
     SIT_POINT                   = "sit_point",
-    ATTACK_DELAY                = "attack_delay";
+    ATTACK_DELAY                = "attack_delay",
+    SUBTITLES                   = "subtitles",
+    SOUNDS                      = "sounds",
+    SEQUENCED_SOUNDS            = "sequenced_sounds",
+    TRIGGERED_SOUNDS            = "triggered_sounds";
 
     @Override
     public void write(JsonWriter out, VirtualEntityFactory factory) throws IOException {
@@ -102,6 +106,31 @@ public class VirtualEntityFactoryAdapter extends TypeAdapter<VirtualEntityFactor
         JsonUtil.writeNonDefaultDouble(out, HEALTH, factory.getHealth(), defaults.getHealth(),writeDefaults);
         JsonUtil.writeNonDefaultString(out, MOVEMENT_TYPE, factory.getMovementType().name().toLowerCase(),
                                                                   defaults.getMovementType().name().toLowerCase(),writeDefaults);
+
+        if (writeDefaults || factory.getSounds() != null) {
+            out.name(SOUNDS).beginArray();
+            for (final String sound : factory.getSounds()) {
+                out.value(sound);
+            }
+            out.endArray();
+        }
+
+        if (writeDefaults || factory.getSequencedSounds() != null) {
+            out.name(SEQUENCED_SOUNDS).beginArray();
+            for (final String sequencedSound : factory.getSequencedSounds()) {
+                out.value(sequencedSound);
+            }
+            out.endArray();
+        }
+
+        if (writeDefaults || factory.getSubtitles() != null) {
+            out.name(SUBTITLES).beginArray();
+            for (final String subtitle : factory.getSubtitles()) {
+                out.value(subtitle);
+            }
+            out.endArray();
+        }
+
         if (writeDefaults || !factory.getAttributes().isEmpty()) {
             out.name(ATTRIBUTES).beginArray();
             for (AttributeInstance attributeInstance : factory.getAttributes().values()) {
@@ -148,7 +177,7 @@ public class VirtualEntityFactoryAdapter extends TypeAdapter<VirtualEntityFactor
                                         defaults.getKnockBackBase(),writeDefaults);
         JsonUtil.writeNonDefaultFloat(out, KNOCK_BACK_PER_DAMAGE, factory.getKnockBackPerDamage(),
                                         defaults.getKnockBackPerDamage(),writeDefaults);
-        if (writeDefaults || !factory.getEnemies().isEmpty()) {
+        if (writeDefaults || (factory.getEnemies() != null && !factory.getEnemies().isEmpty())) {
             out.name(ENEMIES).beginArray();
             for (McmeEntity enemy : factory.getEnemies()) {
                 JsonUtil.writeEntityLink(enemy, false, out);
@@ -233,6 +262,40 @@ public class VirtualEntityFactoryAdapter extends TypeAdapter<VirtualEntityFactor
                         break;
                     case MOVEMENT_TYPE:
                         factory.withMovementType(MovementType.valueOf(in.nextString().toUpperCase()));
+                        break;
+                    case SOUNDS:
+                        List<String> sounds = new ArrayList<>();
+                        in.beginArray();
+
+                        while(in.hasNext()) {
+                            sounds.add(in.nextString());
+                        }
+
+                        in.endArray();
+                        factory.withSounds(sounds);
+                        break;
+                    case TRIGGERED_SOUNDS:
+                    case SEQUENCED_SOUNDS:
+                        List<String> sequencedSounds = new ArrayList<>();
+                        in.beginArray();
+
+                        while(in.hasNext()) {
+                            sequencedSounds.add(in.nextString());
+                        }
+
+                        in.endArray();
+                        factory.withSequencedSounds(sequencedSounds);
+                        break;
+                    case SUBTITLES:
+                        List<String> subtitles = new ArrayList<>();
+                        in.beginArray();
+
+                        while(in.hasNext()) {
+                            subtitles.add(in.nextString());
+                        }
+
+                        in.endArray();
+                        factory.withSubtitles(subtitles);
                         break;
                     case ATTRIBUTES:
                         Map<Attribute,AttributeInstance> attributes = new HashMap<>();

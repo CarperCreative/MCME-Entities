@@ -6,5 +6,7 @@ public enum ActionType {
     INTERACT,
     HURT,
     DEATH,
-    IDLE;
+    IDLE,
+    CONV,
+    CHEERING;
 }
