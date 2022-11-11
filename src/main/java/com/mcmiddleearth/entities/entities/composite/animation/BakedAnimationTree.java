@@ -11,17 +11,49 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 
-public class BakedAnimationTree {
+public class BakedAnimationTree implements Cloneable {
 
-    private final List<BakedAnimation> animations;
+    private List<BakedAnimation> animations;
 
-    private final Map<String,BakedAnimationTree> children = new HashMap<>();
+    private final Map<String,BakedAnimationTree> children;
 
     private final Random random = new Random();
+
+    public BakedAnimationTree(List<BakedAnimation> animations, Map<String, BakedAnimationTree> children) {
+        this.animations = animations;
+        this.children = children;
+    }
 
     public BakedAnimationTree(BakedAnimation animation) {
         this.animations = new ArrayList<>();
         if(animation != null) this.animations.add(animation);
+        this.children = new HashMap<>();
+    }
+
+    public BakedAnimationTree() {
+        this(new ArrayList<>(), new HashMap<>());
+    }
+
+    public List<BakedAnimation> getAnimations() {
+        return animations;
+    }
+
+    public Map<String, BakedAnimationTree> getChildren() {
+        return children;
+    }
+
+    public void init(BakedAnimationEntity entity) {
+        animations = animations.stream().map(bakedAnimation -> {
+            final BakedAnimation clone = bakedAnimation.clone();
+            clone.setEntity(entity);
+            clone.init();
+
+            return clone;
+        }).collect(Collectors.toList());
+
+        for (final BakedAnimationTree childAnimationTree : children.values()) {
+            childAnimationTree.init(entity);
+        }
     }
 
     public void addAnimation(String path, BakedAnimation animation) {
@@ -64,7 +96,7 @@ public class BakedAnimationTree {
         }
         BakedAnimationTree child = children.get(path[0]);
         if(child == null) {
-            child = new BakedAnimationTree(null);
+            child = new BakedAnimationTree();
             children.put(path[0], child);
         }
         if(path.length>1) {
@@ -183,6 +215,17 @@ public class BakedAnimationTree {
             }
         }
         return null;
+    }
+
+    @Override
+    public BakedAnimationTree clone() {
+        try {
+            final BakedAnimationTree clone = (BakedAnimationTree) super.clone();
+
+            return new BakedAnimationTree(clone.getAnimations(), clone.getChildren());
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
     }
 
     public static class SearchResult {

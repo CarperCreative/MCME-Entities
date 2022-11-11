@@ -10,6 +10,7 @@ import com.mcmiddleearth.entities.api.VirtualEntityFactory;
 import com.mcmiddleearth.entities.api.VirtualEntityGoalFactory;
 import com.mcmiddleearth.entities.command.*;
 import com.mcmiddleearth.entities.entities.attributes.VirtualEntityAttributeInstance;
+import com.mcmiddleearth.entities.entities.composite.animation.BakedAnimationManager;
 import com.mcmiddleearth.entities.entities.composite.bones.SpeechBalloonLayout;
 import com.mcmiddleearth.entities.events.listener.PlayerListener;
 import com.mcmiddleearth.entities.events.listener.ProjectileListener;
@@ -37,6 +38,8 @@ public final class EntitiesPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
 
+        instance = this;
+
         saveDefaultConfig();
 
         ProtocolManager manager = ProtocolLibrary.getProtocolManager();
@@ -45,6 +48,7 @@ public final class EntitiesPlugin extends JavaPlugin {
 
         server = new SyncEntityServer(this);
         EntityAPI.init();
+        BakedAnimationManager.load();
 
         PlayerListener playerListener = new PlayerListener();
         ProjectileListener projectileListener = new ProjectileListener();
@@ -77,8 +81,6 @@ public final class EntitiesPlugin extends JavaPlugin {
         manager.addPacketListener(new VirtualEntityUseListener(this, server));
 
         server.start();
-
-        instance = this;
 
     }
 

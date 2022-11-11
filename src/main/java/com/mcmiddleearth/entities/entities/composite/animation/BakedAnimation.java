@@ -1,18 +1,14 @@
 package com.mcmiddleearth.entities.entities.composite.animation;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import com.mcmiddleearth.entities.entities.composite.BakedAnimationEntity;
-import org.bukkit.Material;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
-public class BakedAnimation {
+public class BakedAnimation implements Cloneable {
 
-    private final List<Frame> frames = new ArrayList<>();
+    private final List<Frame> frames;
 
     private int currentFrame, ticks;
 
@@ -24,7 +20,7 @@ public class BakedAnimation {
 
     private boolean finished;
 
-    private final BakedAnimationEntity entity;
+    private BakedAnimationEntity entity;
 
     private final String name;
 
@@ -33,8 +29,9 @@ public class BakedAnimation {
      */
     private final String animationName;
 
-    public BakedAnimation(BakedAnimationEntity entity, BakedAnimationType type, String name, String animationName, String next, int interval) {
+    public BakedAnimation(BakedAnimationEntity entity, List<Frame> frames, BakedAnimationType type, String name, String animationName, String next, int interval) {
         this.entity = entity;
+        this.frames = frames;
         this.name = name;
         this.animationName = animationName;
         this.type = type;
@@ -46,10 +43,22 @@ public class BakedAnimation {
         reset();
     }
 
+    public BakedAnimation(List<Frame> frames, BakedAnimationType type, String name, String animationName, String next, int interval) {
+        this(null, frames, type, name, animationName, next, interval);
+    }
+
+    public BakedAnimation(BakedAnimationType type, String name, String animationName, String next, int interval) {
+        this(null, new ArrayList<>(), type, name, animationName, next, interval);
+    }
+
     public void reset() {
         currentFrame = -1;
         ticks = -1;
         finished = false;
+    }
+
+    public void init() {
+        this.frames.forEach(frame -> frame.initFrame(this.entity));
     }
 
     public void doTick() {
@@ -83,6 +92,10 @@ public class BakedAnimation {
         frames.add(frame);
     }
 
+    public void setEntity(BakedAnimationEntity entity) {
+        this.entity = entity;
+    }
+
     public String getName() {
         return name;
     }
@@ -99,6 +112,10 @@ public class BakedAnimation {
         return type;
     }
 
+    public int getInterval() {
+        return interval;
+    }
+
     public void applyFrame(int frameIndex) {
 //Logger.getGlobal().info("1");
         Frame frame = frames.get(frameIndex);
@@ -108,35 +125,32 @@ public class BakedAnimation {
         }
     }
 
-    public static BakedAnimation loadAnimation(JsonObject data, Material itemMaterial, BakedAnimationEntity entity, String name, String animationName) {
-        Map<String, Integer> states = new HashMap<>();
-        BakedAnimationType type;
-        try {
-            type = BakedAnimationType.valueOf(data.get("loop").getAsString().toUpperCase());
-        }catch (IllegalArgumentException ex) {
-            type = BakedAnimationType.ONCE;
-        }
-        int interval = (data.get("interval") == null? 1 : data.get("interval").getAsInt());
-        String next = (data.has("next")?data.get("next").getAsString():null);
-        BakedAnimation animation = new BakedAnimation(entity, type, name, animationName, next, interval);
-        JsonArray frameData = data.get("frames").getAsJsonArray();
-//long start = System.currentTimeMillis();
-        for(int i = 0; i< frameData.size(); i++) {
-            animation.addFrame(Frame.loadFrame(entity,animation,frameData.get(i).getAsJsonObject(),itemMaterial, entity.getHeadPoseDelay()));
-        }
-//Logger.getGlobal().info("Frame loading: "+(System.currentTimeMillis()-start));
-        return animation;
-    }
-
     public BakedAnimation getReverse(String name, String animationName) {
-        BakedAnimation reverse = new BakedAnimation(entity, type, name, animationName, next, interval);
+        BakedAnimation reverse = new BakedAnimation(type, name, animationName, next, interval);
         for(int i = frames.size()-1; i >= 0; i--) {
             reverse.addFrame(frames.get(i));
         }
         return reverse;
     }
 
+    public List<Frame> getFrames() {
+        return frames;
+    }
+
     public int getCurrentFrame() {
         return currentFrame;
+    }
+
+    public BakedAnimation clone() {
+        try {
+            final BakedAnimation clone = (BakedAnimation) super.clone();
+            final List<Frame> frameList = clone.getFrames().stream()
+                .map(Frame::clone)
+                .collect(Collectors.toList());
+
+            return new BakedAnimation(frameList, clone.getType(), clone.getName(), clone.getAnimationName(), clone.getNext(), clone.getInterval());
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
