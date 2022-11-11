@@ -14,6 +14,7 @@ import java.util.Collection;
 
 public class MovementEngine {
 
+    public static boolean enabled = true;
     private final Vector gravity = new Vector(0,-0.2,0); //theoretically -0.5
 
     private final VirtualEntity entity;
@@ -161,7 +162,7 @@ public class MovementEngine {
     }
 
     private Vector handleCollisions(Vector velocity) {
-        if(entity.getEntityBoundingBox().isZero()) return velocity;
+        if(!enabled || entity.getEntityBoundingBox().isZero()) return velocity;
         BoundingBox entityBB = entity.getEntityBoundingBox().getBoundingBox().clone();
         Collection<McmeEntity> closeEntities = EntitiesPlugin.getEntityServer()
                                         .getEntitiesAt(entity.getLocation(), (int) (entityBB.getWidthX()*2+1),
