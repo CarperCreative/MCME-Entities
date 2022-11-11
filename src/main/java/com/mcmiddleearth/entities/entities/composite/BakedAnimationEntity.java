@@ -9,6 +9,7 @@ import com.mcmiddleearth.entities.api.MovementSpeed;
 import com.mcmiddleearth.entities.api.VirtualEntityFactory;
 import com.mcmiddleearth.entities.entities.composite.animation.AnimationJob;
 import com.mcmiddleearth.entities.entities.composite.animation.BakedAnimation;
+import com.mcmiddleearth.entities.entities.composite.animation.BakedAnimationManager;
 import com.mcmiddleearth.entities.entities.composite.animation.BakedAnimationTree;
 import com.mcmiddleearth.entities.entities.composite.animation.BakedAnimationType;
 import com.mcmiddleearth.entities.events.events.virtual.composite.BakedAnimationEntityAnimationChangeEvent;
@@ -46,7 +47,7 @@ public class BakedAnimationEntity extends CompositeEntity {
 
     //private final Map<String, BakedAnimation> animations = new HashMap<>();
 
-    private final BakedAnimationTree animationTree = new BakedAnimationTree(null);
+    private final BakedAnimationTree animationTree;
 
     private final Map<String, Integer> states = new HashMap<>();
 
@@ -75,38 +76,12 @@ public class BakedAnimationEntity extends CompositeEntity {
 //Logger.getGlobal().info("Manual animation: "+manualAnimationControl);
         movementSpeedAnimation = getMovementSpeed();
         animationFileName = factory.getDataFile();
-        File animationFile = new File(EntitiesPlugin.getAnimationFolder(), animationFileName+".json");
-        try (FileReader reader = new FileReader(animationFile)) {
-//long start = System.currentTimeMillis();
-            JsonObject data = new JsonParser().parse(reader).getAsJsonObject();
-//Logger.getGlobal().info("File loading: "+(System.currentTimeMillis()-start));
-            JsonObject modelData = data.get("model").getAsJsonObject();
-            Material itemMaterial = Material.valueOf(modelData.get("head_item").getAsString().toUpperCase());
-            JsonObject animationData = data.get("animations").getAsJsonObject();
-//start = System.currentTimeMillis();
-            animationData.entrySet().forEach(entry -> {
-                String[] split;
-                if(entry.getKey().contains(factory.getDataFile()+".")) {
-                    split = entry.getKey().split(factory.getDataFile() + "\\.");
-                } else {
-                    split = entry.getKey().split("animations\\.");
-//Logger.getGlobal().info("Length: "+split.length);
-                }
-                String animationKey;
-                if(split.length>1) {
-                    animationKey = split[1];
-                } else {
-//Logger.getGlobal().info("DataFile: "+factory.getDataFile());
-                    animationKey = entry.getKey();
-                }
-//Logger.getGlobal().info("AnimationKey: "+animationKey);
-                animationTree.addAnimation(animationKey, BakedAnimation.loadAnimation(entry.getValue().getAsJsonObject(),
-                        itemMaterial, this, animationKey));
-            });
-//Logger.getGlobal().info("Animation loading: "+(System.currentTimeMillis()-start));
-        } catch (IOException | JsonParseException | IllegalStateException e) {
-            throw new InvalidDataException("Data file '"+factory.getDataFile()+"' doesn't exist or does not contain valid animation data.");
+        if(this.animationFileName == null) {
+            throw new InvalidDataException("Data file '"+factory.getDataFile()+"' doesn't exist");
         }
+
+        this.animationTree = BakedAnimationManager.getAnimation(this.animationFileName).clone();
+        this.animationTree.init(this);
 //animationTree.debug();
         createPackets();
     }

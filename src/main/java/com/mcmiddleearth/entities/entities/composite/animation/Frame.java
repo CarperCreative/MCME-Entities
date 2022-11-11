@@ -1,75 +1,123 @@
 package com.mcmiddleearth.entities.entities.composite.animation;
 
+import com.comphenix.protocol.wrappers.Pair;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mcmiddleearth.entities.entities.composite.BakedAnimationEntity;
 import com.mcmiddleearth.entities.entities.composite.bones.Bone;
 import com.mcmiddleearth.entities.entities.composite.bones.BoneThreeAxis;
 import com.mcmiddleearth.entities.entities.composite.bones.BoneTwoAxis;
+import java.util.ArrayList;
+import java.util.List;
 import org.bukkit.Material;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class Frame {
+public class Frame implements Cloneable {
 
-    private final Map<Bone,BoneData> bones = new HashMap<>();
+    private final List<Pair<String, BoneData>> bonesData;
+    private final Map<Bone, BoneData> bones = new HashMap<>();
+
+    public Frame(List<Pair<String, BoneData>> bonesData) {
+        this.bonesData = bonesData;
+    }
 
     public Frame() {
+        this(new ArrayList<>());
+    }
+
+    public List<Pair<String, BoneData>> getBonesData() {
+        return this.bonesData;
+    }
+
+    public void addBoneData(String key, BoneData boneData) {
+        this.bonesData.add(new Pair<>(key, boneData));
     }
 
     public void apply(int state) {
-        bones.forEach((bone, boneData) -> {
+        this.bones.forEach((bone, boneData) -> {
             bone.setRelativePosition(boneData.getPosition());
-/*if(bone.getName().equals("bone")) {
-    Logger.getGlobal().info("Frame position: "+bone.getRelativePosition().toString());
-}*/
+
             bone.setHeadPose(boneData.getHeadPose());
             bone.setHeadItem(boneData.getItems()[state]);
         });
     }
 
-    public static Frame loadFrame(BakedAnimationEntity entity, BakedAnimation animation,
-                                  JsonObject data, Material itemMaterial, int headPoseDelay) {
-        Set<Map.Entry<String, JsonElement>> entries = data.get("bones").getAsJsonObject().entrySet();
-//long start = System.currentTimeMillis();
-        Frame frame = new Frame();
-        entries.forEach(entry-> {
-            BoneData boneData = BoneData.loadBoneData(entity.getStates(),entry.getValue().getAsJsonObject(),itemMaterial);
-            Bone bone = entity.getBones().stream().filter(searchBone->entry.getKey().equals(searchBone.getName())).findFirst().orElse(null);
-            if(bone == null) {
-//long boneStart = System.currentTimeMillis();
-                boolean headBone = entry.getKey().startsWith("head");
-                switch(entity.getRotationMode()) {
-                    case YAW:
-                        if (headBone) {
-                            bone = new BoneTwoAxis(entry.getKey(), entity, boneData.getHeadPose(),
-                                    boneData.getPosition(), boneData.getItems()[0], true, headPoseDelay);
-                        } else {
-                            bone = new Bone(entry.getKey(), entity, boneData.getHeadPose(),
-                                    boneData.getPosition(), boneData.getItems()[0], false, headPoseDelay);
-                        }
-                        break;
-                    case YAW_PITCH:
-                        bone = new BoneTwoAxis(entry.getKey(), entity, boneData.getHeadPose(),
-                                boneData.getPosition(), boneData.getItems()[0], headBone, headPoseDelay);
-                        break;
-                    case YAW_PITCH_ROLL:
-                        bone = new BoneThreeAxis(entry.getKey(), entity, boneData.getHeadPose(),
-                                boneData.getPosition(), boneData.getItems()[0], headBone, headPoseDelay);
-                        break;
-                }
-//Logger.getGlobal().info("Bone creation: "+(System.currentTimeMillis()-boneStart));
-                entity.getBones().add(bone);
-                /*if(bone.getName().startsWith("head")) {
-                    entity.getHeadBones().add(bone);
-                }*/
-//Logger.getGlobal().info("create bone at: "+bone.getLocation());
+    public void initFrame(BakedAnimationEntity entity) {
+        for (final Pair<String, BoneData> pair : this.bonesData) {
+            final String key = pair.getFirst();
+            final BoneData boneData = pair.getSecond();
+
+            Bone bone = this.getBoneFromEntity(entity, key);
+            if (bone != null) {
+                this.bones.put(bone, boneData);
+                entity.getStates().putAll(boneData.getStates());
+                continue;
             }
-            frame.bones.put(bone,boneData);
+
+            final boolean headBone = key.startsWith("head");
+            final int headPoseDelay = entity.getHeadPoseDelay();
+
+            switch (entity.getRotationMode()) {
+                case YAW:
+                    if (headBone) {
+                        bone = new BoneTwoAxis(key, entity, boneData.getHeadPose(),
+                            boneData.getPosition(), boneData.getItems()[0], true, headPoseDelay
+                        );
+                    } else {
+                        bone = new Bone(key, entity, boneData.getHeadPose(),
+                            boneData.getPosition(), boneData.getItems()[0], false, headPoseDelay
+                        );
+                    }
+                    break;
+                case YAW_PITCH:
+                    bone = new BoneTwoAxis(key, entity, boneData.getHeadPose(),
+                        boneData.getPosition(), boneData.getItems()[0], headBone, headPoseDelay
+                    );
+                    break;
+                case YAW_PITCH_ROLL:
+                    bone = new BoneThreeAxis(key, entity, boneData.getHeadPose(),
+                        boneData.getPosition(), boneData.getItems()[0], headBone, headPoseDelay
+                    );
+                    break;
+            }
+
+            entity.getBones().add(bone);
+            entity.getStates().putAll(boneData.getStates());
+            this.bones.put(bone, boneData);
+        }
+    }
+
+    @Override
+    public Frame clone() {
+        try {
+            final Frame clone = (Frame) super.clone();
+
+            return new Frame(clone.getBonesData());
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
+
+    private Bone getBoneFromEntity(BakedAnimationEntity entity, String boneName) {
+        for (final Bone bone : entity.getBones()) {
+            if (bone.getName().equals(boneName)) {
+                return bone;
+            }
+        }
+        return null;
+    }
+
+    public static Frame loadFrame(JsonObject data, Material itemMaterial) {
+        final Set<Map.Entry<String, JsonElement>> entries = data.get("bones").getAsJsonObject().entrySet();
+        final Frame frame = new Frame();
+
+        entries.forEach(entry -> {
+            final BoneData boneData = BoneData.loadBoneData(entry.getValue().getAsJsonObject(), itemMaterial);
+            frame.addBoneData(entry.getKey(), boneData);
         });
-//Logger.getGlobal().info("Frame loading: "+(System.currentTimeMillis()-start));
         return frame;
     }
 }
