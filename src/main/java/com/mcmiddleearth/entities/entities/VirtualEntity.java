@@ -712,7 +712,7 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
                 this.location.getBlockZ()
             );
 
-            if(this.sequencedSoundStage.size() == stage) {
+            if(this.sequencedSounds.size() == stage) {
                 this.sequencedSoundStage.remove(player.getUniqueId());
                 return;
             }
