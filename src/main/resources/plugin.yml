@@ -75,6 +75,10 @@ commands:
     description: manages entities plugin
     permission: mcmeentities.admin
     usage: /entities reload | restart
+  vcollisions:
+    description: manages entities collisions
+    permission: mcmeentities.admin
+    usage: /vcollisions
 
 permissions:
   mcmeentities.admin:
