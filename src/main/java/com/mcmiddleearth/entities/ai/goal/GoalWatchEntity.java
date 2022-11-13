@@ -48,7 +48,7 @@ public class GoalWatchEntity extends GoalVirtualEntity {
             if (search != null) {
                 this.target = search;
                 this.targetIncomplete = false;
-                this.setOrientation();
+                this.tickCounter = 0;
             }
         }
 
