@@ -15,7 +15,7 @@ public class BakedAnimationTree implements Cloneable {
 
     private List<BakedAnimation> animations;
 
-    private final Map<String,BakedAnimationTree> children;
+    private Map<String,BakedAnimationTree> children;
 
     private final Random random = new Random();
 
@@ -220,11 +220,17 @@ public class BakedAnimationTree implements Cloneable {
     @Override
     public BakedAnimationTree clone() {
         try {
-            final BakedAnimationTree clone = (BakedAnimationTree) super.clone();
+            BakedAnimationTree clone = (BakedAnimationTree) super.clone();
 
-            return new BakedAnimationTree(clone.getAnimations(), clone.getChildren());
+            clone.animations = getAnimations().stream().map(BakedAnimation::clone).collect(Collectors.toList());
+
+            final HashMap<String, BakedAnimationTree> childrenCopy = new HashMap<>(getChildren());
+            childrenCopy.entrySet().forEach(entry -> entry.setValue(entry.getValue().clone()));
+            clone.children = childrenCopy;
+
+            return clone;
         } catch (CloneNotSupportedException e) {
-            throw new AssertionError();
+            throw new RuntimeException(e);
         }
     }
 
