@@ -241,7 +241,12 @@ public class BakedAnimationEntity extends CompositeEntity implements CollisionEn
         EntitiesPlugin.getEntityServer().handleEvent(event);
         if(!event.isCancelled()) {
             this.manualOverride = manualOverride;
-            AnimationJob newAnim = new AnimationJob(animationTree.getAnimation(event.getNextAnimationKey()),payload,delay);
+            BakedAnimation chosenNextAnimation = animationTree.getAnimation(event.getNextAnimationKey());
+            if (!chosenNextAnimation.getName().equals(name)) {
+                // Abort if found animation is not what we wanted
+                return;
+            }
+            AnimationJob newAnim = new AnimationJob(chosenNextAnimation, payload, delay);
             //newAnim.setPayload(payload, delay);
             //Logger.getGlobal().info("New Anim: "+name+" -> "+newAnim);
             if(instantAnimationSwitching || manualOverride) {
