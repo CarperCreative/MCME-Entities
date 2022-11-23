@@ -48,7 +48,7 @@ public class SyncEntityServer implements EntityServer {
 
     private ServerTask serverTask;
 
-    private int lastEntityId = 100000;
+    private int lastEntityId = NO_ENTITY_ID;
 
     private boolean fallDamage = true;
 
@@ -202,6 +202,12 @@ public class SyncEntityServer implements EntityServer {
 
     @Override
     public Collection<? extends McmeEntity> getEntities(Class<? extends McmeEntity> clazz) {
+        if(clazz == null || clazz.equals(McmeEntity.class)) {
+            Set<McmeEntity> entities = new HashSet<>();
+            entities.addAll(playerProvider.getMcmePlayers());
+            entities.addAll(entityProvider.getEntities());
+            return entities;
+        }
         if(clazz.isAssignableFrom(RealPlayer.class)) {
             return playerProvider.getMcmePlayers();
         } else {

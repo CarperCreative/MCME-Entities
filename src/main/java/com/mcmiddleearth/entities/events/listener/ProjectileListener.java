@@ -27,53 +27,56 @@ public class ProjectileListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onProjectileLaunch(ProjectileLaunchEvent event) {
         Projectile projectile = event.getEntity();
-        Location location = projectile.getLocation();
-        location.setDirection(projectile.getVelocity());
-        McmeEntityType type = new McmeEntityType(projectile.getType());
-        double damage = 0;
-        double knockback = 0;
-        if(projectile instanceof AbstractArrow) {
-            damage = ((AbstractArrow) projectile).getDamage();
-            knockback = ((AbstractArrow) projectile).getKnockbackStrength();
-        }
-        McmeEntity shooter = null;
-        if(projectile.getShooter() instanceof Player) {
-            shooter = EntitiesPlugin.getEntityServer().getOrCreateMcmePlayer((Player) projectile.getShooter());
-        }
+        if(!projectile.getScoreboardTags().contains("ignore_virtual_entity")){
 
-        // Hacky solution to consistently assign shooter to projectile from Witchcraft and Wizardry spells.
-        // The problem is the shooter is assigned after the projectile is spawned
-        if(projectile.getScoreboardTags().contains("spell_ini")){
-
-            // Find the closest player and assign them as the shooter
-            Player closestPlayer = null;
-            double closestDistance = Double.POSITIVE_INFINITY;
-
-            for (Player player : Bukkit.getOnlinePlayers()) {
-                double distance = player.getLocation().distanceSquared(projectile.getLocation());
-                if(distance < closestDistance){
-                    closestPlayer = player;
-                    closestDistance = distance;
-                }
+            Location location = projectile.getLocation();
+            location.setDirection(projectile.getVelocity());
+            McmeEntityType type = new McmeEntityType(projectile.getType());
+            double damage = 0;
+            double knockback = 0;
+            if(projectile instanceof AbstractArrow) {
+                damage = ((AbstractArrow) projectile).getDamage();
+                knockback = ((AbstractArrow) projectile).getKnockbackStrength();
             }
-            projectile.setShooter(closestPlayer);
-            shooter = EntitiesPlugin.getEntityServer().getOrCreateMcmePlayer(closestPlayer);
-        }
+            McmeEntity shooter = null;
+            if(projectile.getShooter() instanceof Player) {
+                shooter = EntitiesPlugin.getEntityServer().getOrCreateMcmePlayer((Player) projectile.getShooter());
+            }
 
-        VirtualEntityFactory factory = new VirtualEntityFactory(type, location)
-                .withShooter(shooter)
-                .withProjectileVelocity((float)projectile.getVelocity().length())
-                .withProjectileDamage((float)damage)
-                .withKnockBackBase((float)knockback)
-                .withKnockBackPerDamage(0)
-                .withWhitelist(Collections.singleton(UUID.randomUUID()))
-                .withDependingEntity(projectile)
-                .withCopyOriginalProjectile(true);
-        try {
-            EntitiesPlugin.getEntityServer().spawnEntity(factory);
-        } catch (InvalidLocationException | InvalidDataException e) {
-            e.printStackTrace();
+            // Hacky solution to consistently assign shooter to projectile from Witchcraft and Wizardry spells.
+            // The problem is the shooter is assigned after the projectile is spawned
+            if(projectile.getScoreboardTags().contains("spell_ini")){
+
+                // Find the closest player and assign them as the shooter
+                Player closestPlayer = null;
+                double closestDistance = Double.POSITIVE_INFINITY;
+
+                for (Player player : Bukkit.getOnlinePlayers()) {
+                    double distance = player.getLocation().distanceSquared(projectile.getLocation());
+                    if(distance < closestDistance){
+                        closestPlayer = player;
+                        closestDistance = distance;
+                    }
+                }
+                projectile.setShooter(closestPlayer);
+                shooter = EntitiesPlugin.getEntityServer().getOrCreateMcmePlayer(closestPlayer);
+            }
+
+            VirtualEntityFactory factory = new VirtualEntityFactory(type, location)
+                    .withShooter(shooter)
+                    .withProjectileVelocity((float)projectile.getVelocity().length())
+                    .withProjectileDamage((float)damage)
+                    .withKnockBackBase((float)knockback)
+                    .withKnockBackPerDamage(0)
+                    .withWhitelist(Collections.singleton(UUID.randomUUID()))
+                    .withDependingEntity(projectile)
+                    .withCopyOriginalProjectile(true);
+            try {
+                EntitiesPlugin.getEntityServer().spawnEntity(factory);
+            } catch (InvalidLocationException | InvalidDataException e) {
+                e.printStackTrace();
+            }
+            //event.setCancelled(true);
         }
-        //event.setCancelled(true);
     }
 }

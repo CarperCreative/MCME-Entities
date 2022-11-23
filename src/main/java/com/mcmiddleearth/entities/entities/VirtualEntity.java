@@ -125,6 +125,8 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
 
     private org.bukkit.entity.Entity dependingEntity;
 
+    private final Set<String> tags = new HashSet<>();
+
     public VirtualEntity(VirtualEntityFactory factory) throws InvalidLocationException, InvalidDataException {
         this.updateInterval = factory.getUpdateInterval();
         this.updateRandom = new Random().nextInt(updateInterval);
@@ -163,6 +165,7 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         this.knockBackPerDamage = factory.getKnockBackPerDamage();
         this.enemies = (factory.getEnemies() != null ? factory.getEnemies() : new HashSet<>());
         this.sitPoint = factory.getSitPoint();
+        this.tags.addAll(factory.getTags());
         this.saddle = factory.getSaddlePoint();
         if (factory.getGoalFactory() != null) {
             this.goal = factory.getGoalFactory().build(this);
@@ -250,7 +253,7 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         location = location.add(velocity);
         boundingBox.setLocation(location);
 
-        if ((tickCounter % updateInterval == updateRandom)) {
+        if((tickCounter % updateInterval == updateRandom)) {
             teleportPacket.update();
             teleportPacket.send(viewers);
         } else {
@@ -525,9 +528,9 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
             if (health <= 0) {
                 EntitiesPlugin.getEntityServer().handleEvent(new McmeEntityDeathEvent(this));
                 dead = true;
-                playAnimation(ActionType.DEATH);
+                playAnimation(ActionType.DEATH, false, new Payload(){public void execute(){}},0);
             } else {
-                playAnimation(ActionType.HURT);
+                playAnimation(ActionType.HURT, false, new Payload(){public void execute(){}},0);
             }
         }
     }
@@ -599,7 +602,7 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
                     }
                 };
                 if (animate) {
-                    playAnimation(ActionType.ATTACK, attack, attackDelay);
+                    playAnimation(ActionType.ATTACK, false, attack, attackDelay);
                 } else {
                     attack.execute();
                 }
@@ -681,11 +684,11 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
 
     @Override
     public void playAnimation(ActionType type) {
-        this.playAnimation(type, () -> {
+        this.playAnimation(type, true, () -> {
         }, 0);
     }
 
-    public void playAnimation(ActionType type, Payload payload, int delay) {
+    public void playAnimation(ActionType type, boolean manualOverride, Payload payload, int delay) {
     }
 
     public void setDisplayName(String displayName) {
@@ -866,6 +869,11 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public Set<String> getTagList() {
+        return tags;
+    }
+
     public VirtualEntityFactory getFactory() {
         VirtualEntityFactory factory = new VirtualEntityFactory(type, location, useWhitelistAsBlacklist, uniqueId, name, attributes)
                 .withBoundingBox(boundingBox)
@@ -887,7 +895,8 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
                 .withSubtitleLayout(subtitleLayout)
                 .withSitPoint(sitPoint)
                 .withSaddlePoint(saddle)
-                .withAttackDelay(attackDelay);
+                .withAttackDelay(attackDelay)
+                .withTags(tags);
         if (goal != null) {
             factory.withGoalFactory(goal.getFactory());
         }

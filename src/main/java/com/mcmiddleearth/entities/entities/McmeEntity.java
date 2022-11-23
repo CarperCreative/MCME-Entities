@@ -1,8 +1,11 @@
 package com.mcmiddleearth.entities.entities;
 
 import com.mcmiddleearth.entities.ai.goal.Goal;
-import com.mcmiddleearth.entities.api.*;
 import com.mcmiddleearth.entities.ai.movement.EntityBoundingBox;
+import com.mcmiddleearth.entities.api.ActionType;
+import com.mcmiddleearth.entities.api.McmeEntityType;
+import com.mcmiddleearth.entities.api.MovementSpeed;
+import com.mcmiddleearth.entities.api.MovementType;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.block.BlockFace;
@@ -27,6 +30,7 @@ import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -63,6 +67,22 @@ public interface McmeEntity extends Entity, InventoryHolder {
 
     boolean hasRotationUpdate();
 
+    public Set<String> getTagList();
+
+    public default boolean hasTag(String tag) {
+        for(String search: getTagList()) {
+            if(search.equals(tag)) return true;
+        }
+        return false;
+    }
+
+    public default void addTag(String tag) {
+        getTagList().add(tag);
+    }
+
+    public default void removeTag(String tag) {
+        getTagList().remove(tag);
+    }
     //public boolean onGround();
 
     float getYaw();

@@ -11,8 +11,6 @@ public class SimpleEntityMovePacket extends AbstractPacket {
 
     private final PacketContainer move;
     private final PacketContainer moveLook;
-    private final PacketContainer look;
-    private final PacketContainer stand;
     private final PacketContainer head;
 
     private final McmeEntity entity;
@@ -26,12 +24,6 @@ public class SimpleEntityMovePacket extends AbstractPacket {
 
         move = new PacketContainer(PacketType.Play.Server.REL_ENTITY_MOVE);
         move.getIntegers().write(0, entity.getEntityId());
-
-        look = new PacketContainer(PacketType.Play.Server.ENTITY_LOOK);
-        look.getIntegers().write(0, entity.getEntityId());
-
-        stand = new PacketContainer(PacketType.Play.Server.ENTITY);
-        stand.getIntegers().write(0, entity.getEntityId());
 
         head = new PacketContainer(PacketType.Play.Server.ENTITY_HEAD_ROTATION);
         head.getIntegers().write(0, entity.getEntityId());
@@ -85,9 +77,6 @@ public class SimpleEntityMovePacket extends AbstractPacket {
     public void send(Player recipient) {
 //Logger.getGlobal().info(""+moveType.name());
         switch(moveType) {
-            //case STAND:
-                //send(stand, recipient); //probably not required to send
-              //  break;
             case MOVE:
                 send(move, recipient);
                 break;
@@ -98,8 +87,6 @@ public class SimpleEntityMovePacket extends AbstractPacket {
 //        +" "+moveLook.getShorts().read(1)+" "+moveLook.getShorts().read(2));
                 send(moveLook, recipient);
                 break;
-            //case LOOK:
-            //    send(look, recipient);
         }
         if(entity.hasLookUpdate()) {
             send(head,recipient);

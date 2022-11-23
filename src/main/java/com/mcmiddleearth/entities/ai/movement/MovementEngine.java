@@ -51,6 +51,7 @@ public class MovementEngine {
         }
         switch(entity.getMovementType()) {
             case FLYING:
+            case SWIMMING:
 //Logger.getGlobal().info("location: "+ entity.getLocation());
 //Logger.getGlobal().info("speed: "+ entity.getFlyingSpeed());
                 Vector velocity = zero.clone();
@@ -126,6 +127,7 @@ public class MovementEngine {
 //}
 //Logger.getGlobal().info("entity vel: "+entity.getVelocity());
                     } else {
+//Logger.getGlobal().info("too high to jump: "+jumpHeight);
                         velocity = new Vector(0,0,0);
                     }
                 } else if(distanceToGround()>0.01) {

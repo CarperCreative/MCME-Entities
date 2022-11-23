@@ -45,7 +45,7 @@ public class SimpleLivingEntity extends SimpleEntity {
     }
 
     @Override
-    public void playAnimation(ActionType type, Payload payload, int delay) {
+    public void playAnimation(ActionType type, boolean manualOverride, Payload payload, int delay) {
         this.animation = type;
         new BukkitRunnable() {
             @Override
