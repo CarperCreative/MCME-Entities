@@ -9,6 +9,7 @@ import com.mcmiddleearth.entities.entities.RealPlayer;
 import com.mcmiddleearth.entities.entities.VirtualEntity;
 import com.mcmiddleearth.entities.entities.composite.SpeechBalloonEntity;
 import com.mcmiddleearth.entities.entities.composite.bones.SpeechBalloonLayout;
+import com.mcmiddleearth.entities.entities.composite.collision.CollisionServer;
 import com.mcmiddleearth.entities.events.Cancelable;
 import com.mcmiddleearth.entities.events.events.McmeEntityEvent;
 import com.mcmiddleearth.entities.events.events.McmeEntityRemoveEvent;
@@ -43,6 +44,8 @@ public class SyncEntityServer implements EntityServer {
 
     private final Map<UUID, BlockProvider> blockProviders;
 
+    private final CollisionServer collisionServer;
+
     private ServerTask serverTask;
 
     private int lastEntityId = NO_ENTITY_ID;
@@ -59,6 +62,7 @@ public class SyncEntityServer implements EntityServer {
         playerProvider = new SyncPlayerProvider();
         entityProvider = new SyncEntityProvider();
         blockProviders = new HashMap<>();
+        collisionServer = new CollisionServer(entityProvider, playerProvider);
     }
 
     @Override
@@ -124,6 +128,7 @@ public class SyncEntityServer implements EntityServer {
 //Logger.getGlobal().info("Server: tick entity "+entity);
             entity.doTick();
         });
+
         for(RealPlayer p : playerProvider.getMcmePlayers()) {
             p.doTick();
             if(getCurrentTick()%40==p.getUpdateRandom()) {
@@ -140,6 +145,8 @@ public class SyncEntityServer implements EntityServer {
                 }
             }
         }
+
+        collisionServer.doTick();
     }
 
     @Override

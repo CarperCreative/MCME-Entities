@@ -11,13 +11,13 @@ import com.mcmiddleearth.entities.protocol.packets.simple.ProjectileSpawnPacket;
 import org.apache.commons.math3.util.FastMath;
 import org.bukkit.Location;
 import org.bukkit.Particle;
+import org.bukkit.entity.Entity;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 
 import java.util.Collection;
 import java.util.Random;
-import java.util.logging.Logger;
 
 public class Projectile extends SimpleNonLivingEntity {
 
@@ -92,8 +92,14 @@ public class Projectile extends SimpleNonLivingEntity {
                 setVelocity(velocity.multiply(0.99f).add(gravity));
             }
             else {
-                setVelocity(getDependingEntity().getVelocity());
-                setLocation(getDependingEntity().getLocation());
+                Entity dependingEntity = getDependingEntity();
+                if (!dependingEntity.isValid()) {
+                    // Destroy self if the original projectile has been removed by external factors
+                    terminate();
+                    return;
+                }
+                setVelocity(dependingEntity.getVelocity());
+                setLocation(dependingEntity.getLocation());
             }
         }
     }

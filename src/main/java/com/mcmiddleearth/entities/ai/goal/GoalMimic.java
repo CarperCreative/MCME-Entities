@@ -3,6 +3,7 @@ package com.mcmiddleearth.entities.ai.goal;
 import com.mcmiddleearth.entities.EntitiesPlugin;
 import com.mcmiddleearth.entities.ai.goal.head.HeadGoalMimic;
 import com.mcmiddleearth.entities.api.MovementSpeed;
+import com.mcmiddleearth.entities.api.MovementType;
 import com.mcmiddleearth.entities.api.VirtualEntityGoalFactory;
 import com.mcmiddleearth.entities.entities.McmeEntity;
 import com.mcmiddleearth.entities.entities.VirtualEntity;
@@ -12,6 +13,8 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.util.Vector;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 public class GoalMimic extends GoalVirtualEntity {
@@ -23,6 +26,8 @@ public class GoalMimic extends GoalVirtualEntity {
     private Vector velocity;
 
     private float bodyYaw;
+
+    private final List<MovementSpeed> lastSpeeds = new ArrayList<>();
 
     public GoalMimic(VirtualEntity entity, VirtualEntityGoalFactory factory) {
         super(entity, factory);
@@ -85,28 +90,52 @@ public class GoalMimic extends GoalVirtualEntity {
         }
         if(!backward) {
             if (distance < 0.0001) {
-                movementSpeed = MovementSpeed.STAND;
+                updateMovementSpeed(MovementSpeed.STAND);
             } else if (distance < 0.001) {
-                movementSpeed = MovementSpeed.SLOW;
+                updateMovementSpeed(MovementSpeed.SLOW);
             } else if (distance < 0.1) {
-                movementSpeed = MovementSpeed.WALK;
+                updateMovementSpeed(MovementSpeed.WALK);
             } else {
-                movementSpeed = MovementSpeed.SPRINT;
+                updateMovementSpeed(MovementSpeed.SPRINT);
             }
         } else {
-            if(distance < 0.0001) {
-                movementSpeed = MovementSpeed.STAND;
-            } else if(distance < 0.001) {
-                movementSpeed = MovementSpeed.BACKWARD_SLOW;
-            } else if(distance < 0.1) {
-                movementSpeed = MovementSpeed.BACKWARD_WALK;
+            if (distance < 0.0001) {
+                updateMovementSpeed(MovementSpeed.STAND);
+            } else if (distance < 0.001) {
+                updateMovementSpeed(MovementSpeed.BACKWARD_SLOW);
+            } else if (distance < 0.1) {
+                updateMovementSpeed(MovementSpeed.BACKWARD_WALK);
             } else {
-                movementSpeed = MovementSpeed.BACKWARD_SPRINT;
+                updateMovementSpeed(MovementSpeed.BACKWARD_SPRINT);
             }
         }
         //getEntity().setLocation(mimic.getLocation());
         setYaw(bodyYaw);
         velocity = mimic.getLocation().clone().subtract(getEntity().getLocation()).toVector();
+
+        // NKH HP: Force mimicked entities to upright to:
+        // a) avoid getting stuck in falling state, and
+        // b) always use upright animations as they're the only ones available
+        getEntity().setMovementType(MovementType.UPRIGHT);
+    }
+
+    private void updateMovementSpeed(MovementSpeed speed) {
+        boolean shouldUpdate = true;
+        //Check if the last two speeds match, set should update to false if not
+        for (MovementSpeed oldSpeed : lastSpeeds) {
+            if (!oldSpeed.equals(speed)) {
+                shouldUpdate = false;
+                break;
+            }
+        }
+        //Add the requested speed to the list
+        lastSpeeds.add(speed);
+        //Update the movement speed, but only if we had the same speed for the last 2 ticks
+        if (shouldUpdate)
+            movementSpeed = speed;
+        //Clear out old speeds
+        while (lastSpeeds.size() > 2)
+            lastSpeeds.remove(0);
     }
 
     public boolean isDirectMovementControl() {

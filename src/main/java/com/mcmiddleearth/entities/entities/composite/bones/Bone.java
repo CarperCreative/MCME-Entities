@@ -331,6 +331,10 @@ public class Bone implements McmeEntity {
         return relativePosition;
     }
 
+    public Vector getRelativePositionRotated() {
+        return relativePositionRotated;
+    }
+
     public void setRelativePosition(Vector relativePosition) {
         this.relativePosition = relativePosition;
         rotationUpdate = true;

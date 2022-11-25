@@ -412,8 +412,9 @@ public class RealPlayer extends BukkitCommandSender implements McmeEntity {
     }
 
     @Override
-    public void setInvisible(boolean visible) {
-        getBukkitPlayer().setInvisible(visible);
+    public void setInvisible(boolean invisible) {
+        getBukkitPlayer().setInvisible(invisible);
+        getBukkitPlayer().setCollidable(!invisible);
     }
 
     @Override

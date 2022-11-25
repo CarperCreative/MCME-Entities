@@ -530,7 +530,8 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
                 dead = true;
                 playAnimation(ActionType.DEATH, false, new Payload(){public void execute(){}},0);
             } else {
-                playAnimation(ActionType.HURT, false, new Payload(){public void execute(){}},0);
+                // NKH HP: this just breaks shit
+                // playAnimation(ActionType.HURT, false, new Payload(){public void execute(){}},0);
             }
         }
     }
